@@ -1,0 +1,29 @@
+name: Tests and reproducible audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package and test dependencies
+        run: python -m pip install '.[test]'
+      - name: Test moment identities, error bounds and CLI
+        run: python -W error -m pytest -q
+      - name: Reproduce the full audit
+        run: python -W error -m centered_fd.experiment --output /tmp/centered-fd-ci
